@@ -1,104 +1,197 @@
-<style>
-/* --- Your existing CSS, no change --- */
-body { font-family: Arial, sans-serif; background: #f4f6f9; text-align:center; margin:0; padding:40px; }
-h1 { margin-bottom:10px; }
-.container { background:white; padding:30px; border-radius:15px; box-shadow:0 10px 25px rgba(0,0,0,0.1); display:inline-block; }
-button { padding:10px 20px; margin:10px; border-radius:8px; border:none; font-size:16px; cursor:pointer; }
-#start-btn { background:#4CAF50; color:white; }
-#stop-btn { background:#e74c3c; color:white; }
-#snapshot-btn { background:#3498db; color:white; }
-#reset-btn { background:#f39c12; color:white; }
-#switch-camera-btn { background:#9b59b6; color:white; }
-canvas { border-radius:10px; margin-top:15px; }
-#snapshot-result img { margin-top:15px; border-radius:10px; width:200px; }
-#pet-images img { border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.2); }
-#pet-images p { text-align:center; margin-top:5px; font-weight:bold; }
-#snapshot-result { margin-top:15px; }
-#snapshot-labels div { font-weight:bold; margin-top:2px; }
-</style>
-
-<div class="container">
-  <h1>Image Classification Demo</h1>
-  <p>This model detects my dog Coco vs my cat Ekun using Teachable Machine.</p>
-
-  <div id="pet-images">
-    <h2>Meet My Pets</h2>
-    <div style="display:flex; justify-content:center; gap:20px;">
-      <div><img src="coco.jpeg" alt="Coco" width="150"><p>Coco</p></div>
-      <div><img src="ekun.jpeg" alt="Ekun" width="150"><p>Ekun</p></div>
-    </div>
-  </div>
-
-  <button id="start-btn" onclick="init()">Start</button>
-  <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
-  <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
-  <button id="reset-btn" onclick="resetSnapshot()" disabled>Reset</button>
-  <button id="switch-camera-btn" onclick="switchCamera()" disabled>Switch Camera</button>
-
-  <div id="webcam-container"></div>
-  <div id="label-container"></div>
-
-  <div id="snapshot-result">
-    <div id="snapshot-labels"></div>
-  </div>
-</div>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pet Image Classifier</title>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<style>
+/* General page styling */
+body {
+    font-family: 'Comic Sans MS', cursive, sans-serif;
+    background: #FFF8F0;
+    text-align: center;
+    margin: 0;
+    padding: 50px;
+    color: #555;
+}
+
+/* Main container */
+.container {
+    background: #FFFBF5;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    display: inline-block;
+    max-width: 700px;
+}
+
+/* Headings */
+h1 {
+    margin-bottom: 10px;
+    color: #FF6B6B;
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #FFA07A;
+}
+
+/* Pet images section */
+#pet-images {
+    margin-bottom: 25px;
+}
+
+#pet-images div {
+    display: inline-block;
+    text-align: center;
+}
+
+#pet-images img {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Buttons styling */
+button {
+    padding: 12px 25px;
+    margin: 10px 5px;
+    border-radius: 12px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+
+#start-btn { background: #6BCB77; color: white; }
+#stop-btn { background: #FF6B6B; color: white; }
+#snapshot-btn { background: #4D96FF; color: white; }
+#reset-btn { background: #FFD93D; color: white; }
+
+/* Canvas styling */
+canvas {
+    border-radius: 15px;
+    margin-top: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Snapshot styling */
+#snapshot-result {
+    margin-top: 20px;
+}
+
+#snapshot-result img {
+    border-radius: 15px;
+    width: 200px;
+    height: 200px;
+    object-fit: cover;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+}
+
+#snapshot-labels div {
+    font-weight: bold;
+    margin-top: 3px;
+    color: #555;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Pet Image Classifier 🐾</h1>
+    <p>This model detects my dog Coco vs my cat Ekun using Teachable Machine!</p>
+
+    <div id="pet-images">
+        <h2>Meet My Pets</h2>
+        <div>
+            <img src="coco.jpeg" alt="Coco">
+            <p>Coco</p>
+        </div>
+        <div>
+            <img src="ekun.jpeg" alt="Ekun">
+            <p>Ekun</p>
+        </div>
+    </div>
+
+    <div>
+        <button id="start-btn" onclick="init()">Start</button>
+        <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
+        <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
+        <button id="reset-btn" onclick="resetSnapshot()" disabled>Reset</button>
+    </div>
+
+    <div id="webcam-container"></div>
+
+    <!-- Webcam predictions -->
+    <div id="label-container"></div>
+
+    <!-- Snapshot + prediction stats -->
+    <div id="snapshot-result">
+        <div id="snapshot-labels"></div>
+    </div>
+</div>
+
 <script>
 const URL = "./model/";
+
 let model, webcam, labelContainer, maxPredictions;
 let started = false;
 let animationFrameId;
-let usingRearCamera = false; // start with front camera
 
+// Load the image model and setup the webcam
 async function init() {
-  if (started) return;
-  started = true;
+    if (started) return;
+    started = true;
 
-  const modelURL = URL + "model.json";
-  const metadataURL = URL + "metadata.json";
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
 
-  document.getElementById("start-btn").disabled = true;
-  document.getElementById("stop-btn").disabled = false;
+    document.getElementById("start-btn").disabled = true;
+    document.getElementById("stop-btn").disabled = false;
 
-  model = await tmImage.load(modelURL, metadataURL);
-  maxPredictions = model.getTotalClasses();
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
 
- // For front camera (selfie), flip = true to mirror
-// For rear camera (back-facing), flip = false to show normally
-  const facingMode = usingRearCamera ? "environment" : "user";
-  webcam = new tmImage.Webcam(200, 200, false, { facingMode });
-  
-  await webcam.setup();
-  await webcam.play();
+    webcam = new tmImage.Webcam(200, 200, false); // front camera, no mirroring
+    await webcam.setup();
+    await webcam.play();
 
-  animationFrameId = window.requestAnimationFrame(loop);
+    document.getElementById("webcam-container").innerHTML = "";
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
 
-  document.getElementById("webcam-container").appendChild(webcam.canvas);
+    labelContainer = document.getElementById("label-container");
+    labelContainer.innerHTML = "";
+    for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+    }
 
-  labelContainer = document.getElementById("label-container");
-  labelContainer.innerHTML = "";
-  for (let i = 0; i < maxPredictions; i++) {
-    labelContainer.appendChild(document.createElement("div"));
-  }
+    document.getElementById("snapshot-btn").disabled = false;
+    document.getElementById("reset-btn").disabled = false;
 
-  document.getElementById("snapshot-btn").disabled = false;
-  document.getElementById("reset-btn").disabled = false;
-  document.getElementById("switch-camera-btn").disabled = false;
+    animationFrameId = window.requestAnimationFrame(loop);
 }
 
 async function loop() {
-  webcam.update();
-  await predict();
-  animationFrameId = window.requestAnimationFrame(loop);
+    webcam.update();
+    await predict();
+    animationFrameId = window.requestAnimationFrame(loop);
 }
 
 async function predict() {
-  const prediction = await model.predict(webcam.canvas);
-  for (let i = 0; i < maxPredictions; i++) {
-    labelContainer.childNodes[i].innerHTML = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-  }
+    const prediction = await model.predict(webcam.canvas);
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction =
+            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        labelContainer.childNodes[i].innerHTML = classPrediction;
+    }
 }
 
 function stopWebcam() {
@@ -106,16 +199,35 @@ function stopWebcam() {
     started = false;
     webcam.stop();
     cancelAnimationFrame(animationFrameId);
+
     document.getElementById("webcam-container").innerHTML = "";
     document.getElementById("label-container").innerHTML = "";
 
-    // Disable buttons that need webcam
+    document.getElementById("start-btn").disabled = false;
     document.getElementById("stop-btn").disabled = true;
     document.getElementById("snapshot-btn").disabled = true;
     document.getElementById("reset-btn").disabled = true;
-    document.getElementById("switch-camera-btn").disabled = true;
+}
 
-    document.getElementById("start-btn").disabled = false;
+async function takeSnapshot() {
+    if (!webcam) return;
+
+    const snapshotContainer = document.getElementById("snapshot-result");
+    const snapshotLabels = document.getElementById("snapshot-labels");
+
+    snapshotContainer.querySelector("img")?.remove();
+    snapshotLabels.innerHTML = "";
+
+    const image = new Image();
+    image.src = webcam.canvas.toDataURL("image/png");
+    snapshotContainer.prepend(image);
+
+    const prediction = await model.predict(webcam.canvas);
+    for (let i = 0; i < maxPredictions; i++) {
+        const div = document.createElement("div");
+        div.textContent = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        snapshotLabels.appendChild(div);
+    }
 }
 
 function resetSnapshot() {
@@ -125,45 +237,6 @@ function resetSnapshot() {
     snapshotLabels.innerHTML = "";
     document.getElementById("snapshot-btn").disabled = false;
 }
-
-async function takeSnapshot() {
-  if (!webcam) return;
-  const snapshotContainer = document.getElementById("snapshot-result");
-  const snapshotLabels = document.getElementById("snapshot-labels");
-  snapshotContainer.querySelector("img")?.remove();
-  snapshotLabels.innerHTML = "";
-
-  const image = new Image();
-  image.src = webcam.canvas.toDataURL("image/png");
-  snapshotContainer.prepend(image);
-
-  const prediction = await model.predict(webcam.canvas);
-  for (let i = 0; i < maxPredictions; i++) {
-    const div = document.createElement("div");
-    div.textContent = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-    snapshotLabels.appendChild(div);
-  }
-}
-  
-async function switchCamera() {
-    if (!webcam) return;
-
-    cancelAnimationFrame(animationFrameId); // stop the loop
-    webcam.stop(); // stop current camera
-
-    usingRearCamera = !usingRearCamera; // toggle front/back
-
-    const facingMode = usingRearCamera ? "environment" : "user";
-    webcam = new tmImage.Webcam(200, 200, false, { facingMode }); // flip false
-    await webcam.setup();
-    await webcam.play();
-
-    // Replace the canvas
-    const container = document.getElementById("webcam-container");
-    container.innerHTML = "";
-    container.appendChild(webcam.canvas);
-
-    animationFrameId = window.requestAnimationFrame(loop); // restart prediction loop
-}
-
 </script>
+</body>
+</html>
