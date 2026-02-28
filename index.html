@@ -1,8 +1,88 @@
-<div>Teachable Machine Image Model</div>
-<button id="start-btn" type="button" onclick="init()">Start</button>
-<button id="stop-btn" type="button" onclick="stopWebcam()" disabled>Stop</button>
-<div id="webcam-container"></div>
-<div id="label-container"></div>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f9;
+        text-align: center;
+        margin: 0;
+        padding: 40px;
+    }
+
+    h1 {
+        margin-bottom: 10px;
+    }
+
+    .container {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        display: inline-block;
+    }
+
+    button {
+        padding: 10px 20px;
+        margin: 10px;
+        border-radius: 8px;
+        border: none;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    #start-btn { background: #4CAF50; color: white; }
+    #stop-btn { background: #e74c3c; color: white; }
+    #snapshot-btn { background: #3498db; color: white; }
+
+    canvas {
+        border-radius: 10px;
+        margin-top: 15px;
+    }
+
+    #snapshot-result img {
+        margin-top: 15px;
+        border-radius: 10px;
+        width: 200px;
+    }
+   
+    #pet-images img {
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    #pet-images p {
+        text-align: center;
+        margin-top: 5px;
+        font-weight: bold;
+    }
+
+</style>
+
+<div class="container">
+    <h1>Image Classification Demo</h1>
+    <p>This model detects my dog Coco vs my cat Ekun using an Image Model from Teachable Machine.</p>
+
+    <div id="pet-images">
+        <h2>Meet My Pets</h2>
+        <div style="display:flex; justify-content:center; gap:20px;">
+            <div>
+                <img src="coco.jpg" alt="Coco the dog" width="150">
+                <p>Coco (Dog)</p>
+            </div>
+            <div>
+                <img src="ekun.jpg" alt="Ekun the cat" width="150">
+                <p>Ekun (Cat)</p>
+            </div>
+        </div>
+    </div>
+    
+    <button id="start-btn" onclick="init()">Start</button>
+    <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
+    <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
+
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+    <div id="snapshot-result"></div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <script type="text/javascript">
