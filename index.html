@@ -50,7 +50,7 @@ const URL = "./model/";
 let model, webcam, labelContainer, maxPredictions;
 let started = false;
 let animationFrameId;
-let usingRearCamera = false;
+let usingRearCamera = false; // start with front camera
 
 async function init() {
   if (started) return;
@@ -67,11 +67,12 @@ async function init() {
 
  // For front camera (selfie), flip = true to mirror
 // For rear camera (back-facing), flip = false to show normally
-  const flip = !usingRearCamera; 
-  webcam = new tmImage.Webcam(200, 200, flip, { facingMode: usingRearCamera ? "environment" : "user" });
-
+  const facingMode = usingRearCamera ? "environment" : "user";
+  webcam = new tmImage.Webcam(200, 200, false, { facingMode });
+  
   await webcam.setup();
   await webcam.play();
+
   animationFrameId = window.requestAnimationFrame(loop);
 
   document.getElementById("webcam-container").appendChild(webcam.canvas);
@@ -147,27 +148,22 @@ async function takeSnapshot() {
 async function switchCamera() {
     if (!webcam) return;
 
-    // Stop current webcam loop
-    cancelAnimationFrame(animationFrameId);
-    webcam.stop();
+    cancelAnimationFrame(animationFrameId); // stop the loop
+    webcam.stop(); // stop current camera
 
-    // Toggle camera
-    usingRearCamera = !usingRearCamera;
+    usingRearCamera = !usingRearCamera; // toggle front/back
 
-    // Create new webcam with new camera
-    const flip = !usingRearCamera;
     const facingMode = usingRearCamera ? "environment" : "user";
-
-    webcam = new tmImage.Webcam(200, 200, flip, { facingMode });
+    webcam = new tmImage.Webcam(200, 200, false, { facingMode }); // flip false
     await webcam.setup();
     await webcam.play();
 
-    // Replace canvas
+    // Replace the canvas
     const container = document.getElementById("webcam-container");
     container.innerHTML = "";
     container.appendChild(webcam.canvas);
 
-    // Restart loop
-    animationFrameId = window.requestAnimationFrame(loop);
+    animationFrameId = window.requestAnimationFrame(loop); // restart prediction loop
 }
+
 </script>
