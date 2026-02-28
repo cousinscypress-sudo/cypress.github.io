@@ -53,6 +53,19 @@
         margin-top: 5px;
         font-weight: bold;
     }
+    #snapshot-result {
+        margin-top: 15px;
+    }
+
+    #snapshot-result img {
+        border-radius: 10px;
+        width: 200px;
+    }
+
+    #snapshot-labels div {
+        font-weight: bold;
+        margin-top: 2px;
+    }
 
 </style>
 
@@ -78,9 +91,18 @@
     <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
     <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
 
-    <div id="webcam-container"></div>
+   <div id="webcam-container"></div>
+
+    <!-- Webcam predictions -->
     <div id="label-container"></div>
-    <div id="snapshot-result"></div>
+
+    <!-- Snapshot + prediction stats -->
+    <div id="snapshot-result">
+        <div id="snapshot-labels"></div> <!-- stats for the snapshot -->
+</div>
+
+</div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
@@ -160,18 +182,29 @@
     document.getElementById("start-btn").disabled = false;
     document.getElementById("stop-btn").disabled = true;
 }
-    function takeSnapshot() {
-    if (!webcam) return; // do nothing if webcam isn't started
+    async function takeSnapshot() {
+    if (!webcam) return;
 
     const snapshotContainer = document.getElementById("snapshot-result");
-    snapshotContainer.innerHTML = ""; // clear previous snapshot
+    const snapshotLabels = document.getElementById("snapshot-labels");
 
+    // Clear previous snapshot & stats
+    snapshotContainer.querySelector("img")?.remove();
+    snapshotLabels.innerHTML = "";
+
+    // Capture snapshot
     const image = new Image();
-    image.src = webcam.canvas.toDataURL("image/png"); // capture current webcam frame
+    image.src = webcam.canvas.toDataURL("image/png");
+    snapshotContainer.prepend(image); // put the image at the top
 
-    snapshotContainer.appendChild(image);
-
-    // disable snapshot button so it only saves one
-    document.getElementById("snapshot-btn").disabled = true;
+    // Get predictions for this snapshot
+    const prediction = await model.predict(webcam.canvas);
+    for (let i = 0; i < maxPredictions; i++) {
+        const classPrediction = 
+            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+        const div = document.createElement("div");
+        div.textContent = classPrediction;
+        snapshotLabels.appendChild(div);
+    }
 }
 </script>
