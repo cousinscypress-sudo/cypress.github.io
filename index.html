@@ -64,11 +64,11 @@
         <h2>Meet My Pets</h2>
         <div style="display:flex; justify-content:center; gap:20px;">
             <div>
-                <img src="coco.jpg" alt="Coco the dog" width="150">
+                <img src="coco.jpg" alt="Coco" width="150">
                 <p>Coco (Dog)</p>
             </div>
             <div>
-                <img src="ekun.jpg" alt="Ekun the cat" width="150">
+                <img src="ekun.jpg" alt="Ekun" width="150">
                 <p>Ekun (Cat)</p>
             </div>
         </div>
@@ -97,39 +97,37 @@
     let started = false;
     let animationFrameId;
     // Load the image model and setup the webcam
-    async function init() {
-        
-        if (started) return;
-        started = true;
-        
-        const modelURL = URL + "model.json";
-        const metadataURL = URL + "metadata.json";
-        
-        document.getElementById("start-btn").disabled = true;
+   async function init() {
+       if (started) return;
+       started = true;
+       
+       const modelURL = URL + "model.json";
+       const metadataURL = URL + "metadata.json";
 
-        document.getElementById("start-btn").disabled = true;
-        document.getElementById("stop-btn").disabled = false;
-        
-        // load the model and metadata
-        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
-        // or files from your local hard drive
-        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
-        model = await tmImage.load(modelURL, metadataURL);
-        maxPredictions = model.getTotalClasses();
+    // Disable start, enable stop and snapshot buttons
+    document.getElementById("start-btn").disabled = true;
+    document.getElementById("stop-btn").disabled = false;
+    document.getElementById("snapshot-btn").disabled = false;
 
-        // Convenience function to setup a webcam
-        const flip = true; // whether to flip the webcam
-        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
-        await webcam.setup(); // request access to the webcam
-        await webcam.play();
-        animationFrameId = window.requestAnimationFrame(loop);
-        // append elements to the DOM
-        document.getElementById("webcam-container").appendChild(webcam.canvas);
-        labelContainer = document.getElementById("label-container");
-        for (let i = 0; i < maxPredictions; i++) { // and class labels
-            labelContainer.appendChild(document.createElement("div"));
-        }
+    // load the model and metadata
+    model = await tmImage.load(modelURL, metadataURL);
+    maxPredictions = model.getTotalClasses();
+
+    // setup webcam
+    const flip = true;
+    webcam = new tmImage.Webcam(200, 200, flip);
+    await webcam.setup();
+    await webcam.play();
+    animationFrameId = window.requestAnimationFrame(loop);
+
+    // append elements to the DOM
+    document.getElementById("webcam-container").appendChild(webcam.canvas);
+    labelContainer = document.getElementById("label-container");
+    labelContainer.innerHTML = ""; // clear any old labels
+    for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
     }
+}
 
    async function loop() {
        webcam.update();
@@ -161,5 +159,19 @@
 
     document.getElementById("start-btn").disabled = false;
     document.getElementById("stop-btn").disabled = true;
+}
+    function takeSnapshot() {
+    if (!webcam) return; // do nothing if webcam isn't started
+
+    const snapshotContainer = document.getElementById("snapshot-result");
+    snapshotContainer.innerHTML = ""; // clear previous snapshot
+
+    const image = new Image();
+    image.src = webcam.canvas.toDataURL("image/png"); // capture current webcam frame
+
+    snapshotContainer.appendChild(image);
+
+    // disable snapshot button so it only saves one
+    document.getElementById("snapshot-btn").disabled = true;
 }
 </script>
