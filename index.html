@@ -90,6 +90,7 @@
     <button id="start-btn" onclick="init()">Start</button>
     <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
     <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
+    <button id="reset-btn" onclick="resetSnapshot()" disabled>Reset</button>
 
    <div id="webcam-container"></div>
 
@@ -149,6 +150,9 @@
     for (let i = 0; i < maxPredictions; i++) {
         labelContainer.appendChild(document.createElement("div"));
     }
+       
+    document.getElementById("snapshot-btn").disabled = false;
+    document.getElementById("reset-btn").disabled = false;
 }
 
    async function loop() {
@@ -181,6 +185,10 @@
 
     document.getElementById("start-btn").disabled = false;
     document.getElementById("stop-btn").disabled = true;
+
+    document.getElementById("snapshot-btn").disabled = true;
+    document.getElementById("reset-btn").disabled = true;
+
 }
     async function takeSnapshot() {
     if (!webcam) return;
@@ -206,5 +214,17 @@
         div.textContent = classPrediction;
         snapshotLabels.appendChild(div);
     }
+}
+    function resetSnapshot() {
+    const snapshotContainer = document.getElementById("snapshot-result");
+    const snapshotLabels = document.getElementById("snapshot-labels");
+
+    // Clear snapshot image
+    snapshotContainer.querySelector("img")?.remove();
+    // Clear stats
+    snapshotLabels.innerHTML = "";
+
+    // Re-enable snapshot button
+    document.getElementById("snapshot-btn").disabled = false;
 }
 </script>
