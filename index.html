@@ -10,16 +10,18 @@
     // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
 
     // the link to your model provided by Teachable Machine export panel
-    let started = false;
-    let animationFrameId;
     
     const URL = "./model/";
 
     let model, webcam, labelContainer, maxPredictions;
     let started = false;
-    
+    let animationFrameId;
     // Load the image model and setup the webcam
     async function init() {
+        
+        if (started) return;
+        started = true;
+        
         const modelURL = URL + "model.json";
         const metadataURL = URL + "metadata.json";
         
@@ -49,11 +51,12 @@
         }
     }
 
-    async function loop() {
-        webcam.update(); // update the webcam frame
-        await predict();
-        window.requestAnimationFrame(loop);
-    }
+   async function loop() {
+       webcam.update();
+       await predict();
+       animationFrameId = window.requestAnimationFrame(loop);
+   }
+
 
     // run the webcam image through the image model
     async function predict() {
