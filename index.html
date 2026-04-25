@@ -2,241 +2,524 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Pet Image Classifier</title>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<title>Eye Jump - Retro Game</title>
+
+<script async src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.0"></script>
+<script async src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@0.8.5"></script>
+
 <style>
-/* General page styling */
-body {
-    font-family: 'Comic Sans MS', cursive, sans-serif;
-    background: #FFF8F0;
-    text-align: center;
+  * {
     margin: 0;
-    padding: 50px;
-    color: #555;
-}
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-/* Main container */
-.container {
-    background: #FFFBF5;
-    padding: 40px;
-    border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    display: inline-block;
-    max-width: 700px;
-}
-
-/* Headings */
-h1 {
-    margin-bottom: 10px;
-    color: #FF6B6B;
-}
-
-h2 {
-    margin-bottom: 15px;
-    color: #FFA07A;
-}
-
-/* Pet images section */
-#pet-images {
-    margin-bottom: 25px;
-}
-
-#pet-images div {
-    display: inline-block;
+  body {
+    background: linear-gradient(135deg, #0a0e27 0%, #1a0033 100%);
+    color: #00ffcc;
+    font-family: 'Courier New', monospace;
     text-align: center;
-}
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-#pet-images img {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
-    border-radius: 15px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-}
+  .container {
+    padding: 20px;
+    max-width: 900px;
+  }
 
-/* Buttons styling */
-button {
-    padding: 12px 25px;
-    margin: 10px 5px;
-    border-radius: 12px;
-    border: none;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
+  h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00ffcc;
+    letter-spacing: 3px;
+    animation: glow 2s ease-in-out infinite;
+  }
 
-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-}
+  @keyframes glow {
+    0%, 100% { text-shadow: 0 0 10px #00ffcc; }
+    50% { text-shadow: 0 0 20px #00ffcc, 0 0 30px #ff00ff; }
+  }
 
-#start-btn { background: #6BCB77; color: white; }
-#stop-btn { background: #FF6B6B; color: white; }
-#snapshot-btn { background: #4D96FF; color: white; }
-#reset-btn { background: #FFD93D; color: white; }
+  .subtitle {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+    color: #ff00ff;
+  }
 
-/* Canvas styling */
-canvas {
-    border-radius: 15px;
-    margin-top: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
+  .game-wrapper {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
 
-/* Snapshot styling */
-#snapshot-result {
-    margin-top: 20px;
-}
+  canvas {
+    border: 4px solid #00ffcc;
+    display: block;
+    background: #0a0a2e;
+    box-shadow: 0 0 20px #00ffcc;
+  }
 
-#snapshot-result img {
-    border-radius: 15px;
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
-}
+  .ui-panel {
+    border: 3px solid #ff00ff;
+    padding: 20px;
+    background: rgba(26, 0, 51, 0.8);
+    box-shadow: 0 0 15px #ff00ff;
+    text-align: left;
+    min-width: 200px;
+  }
 
-#snapshot-labels div {
+  .ui-panel h3 {
+    color: #ff00ff;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+  }
+
+  .stat {
+    margin: 10px 0;
+    font-size: 1.1em;
+  }
+
+  .stat-label {
+    color: #00ffcc;
+  }
+
+  .stat-value {
+    color: #ffff00;
     font-weight: bold;
-    margin-top: 3px;
-    color: #555;
-}
+    font-size: 1.3em;
+  }
+
+  .webcam-feed {
+    border: 2px solid #00ffcc;
+    margin-top: 10px;
+    background: #000;
+    display: none;
+  }
+
+  #webcam {
+    width: 200px;
+    height: 150px;
+  }
+
+  .status {
+    margin-top: 20px;
+    padding: 10px;
+    border: 2px solid #00ffcc;
+    background: rgba(0, 255, 204, 0.1);
+    font-size: 0.9em;
+  }
+
+  .status.ready {
+    color: #00ff00;
+    border-color: #00ff00;
+    background: rgba(0, 255, 0, 0.1);
+  }
+
+  .instructions {
+    margin-top: 20px;
+    padding: 15px;
+    border: 2px dashed #00ffcc;
+    background: rgba(0, 255, 204, 0.05);
+    font-size: 0.95em;
+    line-height: 1.6;
+  }
+
+  .game-over {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+
+  .game-over.show {
+    display: flex;
+  }
+
+  .game-over-content {
+    border: 5px solid #ff00ff;
+    padding: 40px;
+    background: #0a0a2e;
+    text-align: center;
+    box-shadow: 0 0 30px #ff00ff;
+  }
+
+  .game-over h2 {
+    font-size: 2.5em;
+    color: #ff0000;
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px #ff0000;
+  }
+
+  .game-over p {
+    font-size: 1.5em;
+    color: #ffff00;
+    margin: 10px 0;
+  }
+
+  .game-over button {
+    margin-top: 20px;
+    padding: 15px 30px;
+    font-size: 1.2em;
+    background: #ff00ff;
+    color: black;
+    border: 2px solid #ff00ff;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+  }
+
+  .game-over button:hover {
+    background: #00ffcc;
+    border-color: #00ffcc;
+    box-shadow: 0 0 10px #00ffcc;
+  }
 </style>
 </head>
+
 <body>
 
 <div class="container">
-    <h1>Pet Image Classifier 🐾</h1>
-    <p>This model detects my dog Coco vs my cat Ekun using Teachable Machine!</p>
+  <h1>👁️ EYE JUMP 👁️</h1>
+  <p class="subtitle">RETRO EYE-TRACKING GAME</p>
 
-    <div id="pet-images">
-        <h2>Meet My Pets</h2>
-        <div>
-            <img src="coco.jpeg" alt="Coco">
-            <p>Coco</p>
-        </div>
-        <div>
-            <img src="ekun.jpeg" alt="Ekun">
-            <p>Ekun</p>
-        </div>
-    </div>
-
+  <div class="game-wrapper">
     <div>
-        <button id="start-btn" onclick="init()">Start</button>
-        <button id="stop-btn" onclick="stopWebcam()" disabled>Stop</button>
-        <button id="snapshot-btn" onclick="takeSnapshot()" disabled>Take Snapshot</button>
-        <button id="reset-btn" onclick="resetSnapshot()" disabled>Reset</button>
+      <canvas id="gameCanvas" width="800" height="300"></canvas>
+      
+      <div class="status" id="status">
+        Loading Model...
+      </div>
+
+      <div class="instructions">
+        <strong>HOW TO PLAY:</strong><br>
+        👀 Allow camera access when prompted<br>
+        😑 <strong>CLOSE YOUR EYES</strong> to jump over obstacles<br>
+        🏃 Avoid the red blocks<br>
+        ⚡ Difficulty increases as you play
+      </div>
     </div>
 
-    <div id="webcam-container"></div>
+    <div class="ui-panel">
+      <h3>📊 STATS</h3>
+      
+      <div class="stat">
+        <span class="stat-label">Score:</span><br>
+        <span class="stat-value" id="scoreDisplay">0</span>
+      </div>
 
-    <!-- Webcam predictions -->
-    <div id="label-container"></div>
+      <div class="stat">
+        <span class="stat-label">Level:</span><br>
+        <span class="stat-value" id="levelDisplay">1</span>
+      </div>
 
-    <!-- Snapshot + prediction stats -->
-    <div id="snapshot-result">
-        <div id="snapshot-labels"></div>
+      <div class="stat">
+        <span class="stat-label">Speed:</span><br>
+        <span class="stat-value" id="speedDisplay">5</span>
+      </div>
+
+      <div class="stat">
+        <span class="stat-label">Eyes:</span><br>
+        <span id="eyeStatus" style="color: #ffff00;">Detecting...</span>
+      </div>
+
+      <div class="webcam-feed">
+        <div id="webcam"></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<div class="game-over" id="gameOverScreen">
+  <div class="game-over-content">
+    <h2>GAME OVER</h2>
+    <p>Final Score: <span id="finalScore">0</span></p>
+    <p>Level Reached: <span id="finalLevel">1</span></p>
+    <button onclick="location.reload()">PLAY AGAIN</button>
+  </div>
 </div>
 
 <script>
-const URL = "./model/";
+// ==================== GAME CONFIG ====================
+const MODEL_URL = "./model.json";
+const METADATA_URL = "./metadata.json";
+const GROUND_Y = 240;
+const PLAYER_SIZE = 25;
 
-let model, webcam, labelContainer, maxPredictions;
-let started = false;
-let animationFrameId;
+// ==================== GAME STATE ====================
+let model, webcam;
+let lastJumpTime = 0;
+let gameRunning = true;
+let difficultyMultiplier = 1;
 
-// Load the image model and setup the webcam
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+let player = {
+  x: 60,
+  y: GROUND_Y,
+  width: PLAYER_SIZE,
+  height: PLAYER_SIZE,
+  velocityY: 0,
+  jumping: false,
+  jumpPower: -20
+};
+
+let gravity = 1;
+let obstacles = [];
+let frame = 0;
+let score = 0;
+let level = 1;
+let gameSpeed = 5;
+
+// ==================== INITIALIZATION ====================
+function waitForLibraries() {
+  if (typeof tmImage === "undefined" || typeof tf === "undefined") {
+    updateStatus("Loading libraries...", false);
+    setTimeout(waitForLibraries, 100);
+    return;
+  }
+  init();
+}
+
 async function init() {
-    if (started) return;
-    started = true;
+  try {
+    updateStatus("Loading Model...", false);
+    
+    model = await tmImage.load(MODEL_URL, METADATA_URL);
+    updateStatus("Model loaded! Setting up webcam...", false);
 
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
-
-    document.getElementById("start-btn").disabled = true;
-    document.getElementById("stop-btn").disabled = false;
-
-    model = await tmImage.load(modelURL, metadataURL);
-    maxPredictions = model.getTotalClasses();
-
-    webcam = new tmImage.Webcam(200, 200, true); // front camera, no mirroring
+    webcam = new tmImage.Webcam(200, 150, true);
     await webcam.setup();
     await webcam.play();
-
-    document.getElementById("webcam-container").innerHTML = "";
-    document.getElementById("webcam-container").appendChild(webcam.canvas);
-
-    labelContainer = document.getElementById("label-container");
-    labelContainer.innerHTML = "";
-    for (let i = 0; i < maxPredictions; i++) {
-        labelContainer.appendChild(document.createElement("div"));
-    }
-
-    document.getElementById("snapshot-btn").disabled = false;
-    document.getElementById("reset-btn").disabled = false;
-
-    animationFrameId = window.requestAnimationFrame(loop);
+    
+    updateStatus("Ready to play! Close your eyes to jump.", true);
+    window.requestAnimationFrame(gameLoop);
+  } catch (error) {
+    updateStatus("Error loading model: " + error.message, false);
+    console.error(error);
+  }
 }
 
-async function loop() {
-    webcam.update();
-    await predict();
-    animationFrameId = window.requestAnimationFrame(loop);
+function updateStatus(message, isReady) {
+  const statusEl = document.getElementById("status");
+  statusEl.textContent = message;
+  if (isReady) {
+    statusEl.classList.add("ready");
+  }
 }
 
+// ==================== GAME LOOP ====================
+async function gameLoop() {
+  if (!gameRunning) {
+    return;
+  }
+
+  webcam.update();
+  await predict();
+  updateGame();
+  drawGame();
+  updateUI();
+
+  window.requestAnimationFrame(gameLoop);
+}
+
+// ==================== EYE DETECTION ====================
 async function predict() {
-    const prediction = await model.predict(webcam.canvas);
-    for (let i = 0; i < maxPredictions; i++) {
-        const classPrediction =
-            prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-        labelContainer.childNodes[i].innerHTML = classPrediction;
+  const predictions = await model.predict(webcam.canvas);
+
+  let openProb = 0;
+  let closedProb = 0;
+
+  predictions.forEach(p => {
+    const name = p.className.toLowerCase();
+    if (name.includes("open")) openProb = p.probability;
+    if (name.includes("closed")) closedProb = p.probability;
+  });
+
+  // Update eye status display
+  const eyeStatus = document.getElementById("eyeStatus");
+  if (openProb > closedProb) {
+    eyeStatus.textContent = "👀 Open";
+    eyeStatus.style.color = "#00ff00";
+  } else {
+    eyeStatus.textContent = "😑 Closed";
+    eyeStatus.style.color = "#ff0000";
+  }
+
+  // Jump on closed eyes
+  const now = Date.now();
+  if (
+    closedProb > 0.85 &&
+    closedProb > openProb &&
+    !player.jumping &&
+    now - lastJumpTime > 400
+  ) {
+    player.velocityY = player.jumpPower;
+    player.jumping = true;
+    lastJumpTime = now;
+  }
+}
+
+// ==================== GAME LOGIC ====================
+function updateGame() {
+  frame++;
+  score += Math.floor(difficultyMultiplier);
+
+  // Player physics
+  player.y += player.velocityY;
+  player.velocityY += gravity;
+
+  // Ground collision
+  if (player.y >= GROUND_Y) {
+    player.y = GROUND_Y;
+    player.velocityY = 0;
+    player.jumping = false;
+  }
+
+  // Spawn obstacles with increasing frequency
+  const spawnRate = Math.max(50, 90 - Math.floor(level * 5));
+  if (frame % spawnRate === 0) {
+    obstacles.push({
+      x: canvas.width,
+      y: GROUND_Y,
+      w: 20,
+      h: 30,
+      type: "cactus"
+    });
+  }
+
+  // Move obstacles
+  obstacles.forEach(o => {
+    o.x -= gameSpeed;
+  });
+
+  // Remove off-screen obstacles
+  obstacles = obstacles.filter(o => o.x > -50);
+
+  // Collision detection
+  obstacles.forEach(o => {
+    if (
+      player.x < o.x + o.w &&
+      player.x + player.width > o.x &&
+      player.y < o.y + o.h &&
+      player.y + player.height > o.y
+    ) {
+      endGame();
     }
+  });
+
+  // Difficulty progression
+  const newLevel = Math.floor(score / 500) + 1;
+  if (newLevel !== level) {
+    level = newLevel;
+    gameSpeed = 5 + (level - 1) * 1.5;
+    difficultyMultiplier = 1 + (level - 1) * 0.3;
+  }
 }
 
-function stopWebcam() {
-    if (!webcam) return;
-    started = false;
-    webcam.stop();
-    cancelAnimationFrame(animationFrameId);
+// ==================== RENDERING ====================
+function drawGame() {
+  // Background
+  ctx.fillStyle = "#0a0a2e";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    document.getElementById("webcam-container").innerHTML = "";
-    document.getElementById("label-container").innerHTML = "";
+  // Grid pattern
+  ctx.strokeStyle = "rgba(0, 255, 204, 0.1)";
+  ctx.lineWidth = 1;
+  for (let i = 0; i < canvas.width; i += 40) {
+    ctx.beginPath();
+    ctx.moveTo(i, 0);
+    ctx.lineTo(i, canvas.height);
+    ctx.stroke();
+  }
 
-    document.getElementById("start-btn").disabled = false;
-    document.getElementById("stop-btn").disabled = true;
-    document.getElementById("snapshot-btn").disabled = true;
-    document.getElementById("reset-btn").disabled = true;
+  // Ground line
+  ctx.strokeStyle = "#00ffcc";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(0, GROUND_Y + PLAYER_SIZE);
+  ctx.lineTo(canvas.width, GROUND_Y + PLAYER_SIZE);
+  ctx.stroke();
+
+  // Player (eye character)
+  drawPlayer();
+
+  // Obstacles
+  drawObstacles();
+
+  // Score in-game
+  ctx.fillStyle = "#ffff00";
+  ctx.font = "bold 18px monospace";
+  ctx.textAlign = "left";
+  ctx.fillText("SCORE: " + score, 20, 30);
 }
 
-async function takeSnapshot() {
-    if (!webcam) return;
+function drawPlayer() {
+  const eyeX = player.x + player.width / 2;
+  const eyeY = player.y + player.height / 2;
 
-    const snapshotContainer = document.getElementById("snapshot-result");
-    const snapshotLabels = document.getElementById("snapshot-labels");
+  // Body
+  ctx.fillStyle = "#00ffcc";
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, player.width / 2, 0, Math.PI * 2);
+  ctx.fill();
 
-    snapshotContainer.querySelector("img")?.remove();
-    snapshotLabels.innerHTML = "";
+  // Inner circle (pupil)
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.arc(eyeX, eyeY, player.width / 4, 0, Math.PI * 2);
+  ctx.fill();
 
-    const image = new Image();
-    image.src = webcam.canvas.toDataURL("image/png");
-    snapshotContainer.prepend(image);
-
-    const prediction = await model.predict(webcam.canvas);
-    for (let i = 0; i < maxPredictions; i++) {
-        const div = document.createElement("div");
-        div.textContent = prediction[i].className + ": " + prediction[i].probability.toFixed(2);
-        snapshotLabels.appendChild(div);
-    }
+  // Shine effect
+  ctx.fillStyle = "#ffff00";
+  ctx.beginPath();
+  ctx.arc(eyeX - 3, eyeY - 3, 3, 0, Math.PI * 2);
+  ctx.fill();
 }
 
-function resetSnapshot() {
-    const snapshotContainer = document.getElementById("snapshot-result");
-    const snapshotLabels = document.getElementById("snapshot-labels");
-    snapshotContainer.querySelector("img")?.remove();
-    snapshotLabels.innerHTML = "";
-    document.getElementById("snapshot-btn").disabled = false;
+function drawObstacles() {
+  obstacles.forEach(o => {
+    // Cactus shape
+    ctx.fillStyle = "#ff0000";
+    ctx.fillRect(o.x, o.y, o.w, o.h);
+
+    // Add spikes
+    ctx.fillStyle = "#ff6666";
+    ctx.fillRect(o.x - 5, o.y + 5, 5, 10);
+    ctx.fillRect(o.x + o.w, o.y + 5, 5, 10);
+    ctx.fillRect(o.x + o.w / 2 - 2.5, o.y - 5, 5, 5);
+  });
 }
+
+function updateUI() {
+  document.getElementById("scoreDisplay").textContent = score;
+  document.getElementById("levelDisplay").textContent = level;
+  document.getElementById("speedDisplay").textContent = gameSpeed.toFixed(1);
+}
+
+function endGame() {
+  gameRunning = false;
+
+  document.getElementById("finalScore").textContent = score;
+  document.getElementById("finalLevel").textContent = level;
+  document.getElementById("gameOverScreen").classList.add("show");
+}
+
+// ==================== START ====================
+waitForLibraries();
 </script>
+
 </body>
 </html>
